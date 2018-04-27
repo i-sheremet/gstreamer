@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* Build the pipeline. Note that we are NOT linking the source at this
-     * point. We will do it later. */
+    /* Build the pipeline. Note that we are NOT linking the source at this point. We will do it later. */
     gst_bin_add_many (GST_BIN (data.pipeline), data.source, data.convert , data.sink, NULL);
-    if (!gst_element_link (data.convert, data.sink)) {
+    if (!gst_element_link (data.convert, data.sink))
+    {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (data.pipeline);
         return -1;
@@ -67,7 +67,8 @@ int main(int argc, char *argv[])
                                           GstMessageType(GST_MESSAGE_STATE_CHANGED | GST_MESSAGE_ERROR | GST_MESSAGE_EOS));
 
         /* Parse message */
-        if (msg != NULL) {
+        if (msg != NULL)
+        {
             GError *err;
             gchar *debug_info;
 
