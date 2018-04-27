@@ -1,8 +1,9 @@
 #include <gst/gst.h>
+#include "iostream"
 
 int main(int argc, char *argv[])
 {
-    GstElement *pipeline, *source, *sink;
+    GstElement *pipeline, *source, *sink, *filter;
     GstBus *bus;
     GstMessage *msg;
     GstStateChangeReturn ret;
@@ -10,28 +11,38 @@ int main(int argc, char *argv[])
     /* Initialize GStreamer */
     gst_init (&argc, &argv);
 
-    source = gst_element_factory_make("autovideosrc", "source"); /// WEBCAM
+//    source = gst_element_factory_make("autovideosrc", "source"); /// WEBCAM
     /* Create the elements */
-//    source = gst_element_factory_make("videotestsrc", "source");
+    source = gst_element_factory_make("videotestsrc", "source");
     sink = gst_element_factory_make("autovideosink", "sink");
+    filter = gst_element_factory_make("videoconvert", "filter");
 
     /* Create the empty pipeline */
     pipeline = gst_pipeline_new ("test-pipeline");
 
-    if (!pipeline || !source || !sink)
+    if (!pipeline || !source || !sink || !filter)
     {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
 
     /* Build the pipeline */
-    gst_bin_add_many (GST_BIN(pipeline), source, sink, NULL);
-    if (gst_element_link (source, sink) != TRUE)
+    gst_bin_add_many (GST_BIN(pipeline), source, filter, sink, NULL);
+//    gst_bin_add_many (GST_BIN(pipeline), source, sink, NULL);
+    if (gst_element_link (source, filter) != TRUE)
     {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (pipeline);
         return -1;
     }
+
+    if (gst_element_link (filter, sink) != TRUE)
+    {
+        g_printerr ("Elements could not be linked.\n");
+        gst_object_unref (pipeline);
+        return -1;
+    }
+
 
     /* Modify the source's properties */
     g_object_set (source, "pattern", 0, NULL);
