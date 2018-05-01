@@ -1,4 +1,5 @@
 #include <gst/gst.h>
+#include <iostream>
 
 /* Functions below print the Capabilities in a human-friendly format */
 static gboolean print_field (GQuark field, const GValue * value, gpointer pfx) {
@@ -105,7 +106,7 @@ static void print_pad_capabilities (GstElement *element, gchar *pad_name) {
 int main(int argc, char *argv[])
 {
     GstElement* pipeline, * source, * sink;
-    GstElementFactory* source_factory, * sink_factory;
+    GstElementFactory* source_factory, * sink_factory, *video_src;
     GstBus* bus;
     GstMessage* msg;
     GstStateChangeReturn ret;
@@ -117,7 +118,10 @@ int main(int argc, char *argv[])
     /* Create the element factories */
     source_factory = gst_element_factory_find("audiotestsrc");
     sink_factory = gst_element_factory_find("autoaudiosink");
-    if (!source_factory || !sink_factory)
+
+    video_src = gst_element_factory_find("autovideosrc"); /// Added
+
+    if (!source_factory || !sink_factory || !video_src)
     {
         g_printerr("Not all element factories could be created.\n");
         return -1;
@@ -126,6 +130,10 @@ int main(int argc, char *argv[])
     /* Print information about the pad templates of these factories */
     print_pad_templates_information(source_factory);
     print_pad_templates_information(sink_factory);
+
+    std::cout << "__________________________" << std::endl; // DEBUG DELETE
+    print_pad_templates_information(video_src);
+    std::cout << "__________________________" << std::endl; // DEBUG DELETE
 
     /* Ask the factories to instantiate actual elements */
     source = gst_element_factory_create(source_factory, "source");
