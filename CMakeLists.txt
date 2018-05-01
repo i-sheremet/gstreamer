@@ -38,3 +38,6 @@ target_link_libraries(basic-tutorial-2 ${GSTREAMER_LIBRARIES})
 
 add_executable(basic-tutorial-3 ${CMAKE_CURRENT_LIST_DIR}/basic-tutorial-3.cpp)
 target_link_libraries(basic-tutorial-3 ${GSTREAMER_LIBRARIES})
+
+add_executable(basic-tutorial-6 ${CMAKE_CURRENT_LIST_DIR}/basic-tutorial-6.cpp)
+target_link_libraries(basic-tutorial-6 ${GSTREAMER_LIBRARIES})
