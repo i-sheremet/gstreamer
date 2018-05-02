@@ -7,6 +7,7 @@ typedef struct _CustomData
     GstElement *source;
     GstElement *convert;
     GstElement *sink;
+    GstElement *sink_video, *converter_video;
 } CustomData;
 
 /* Handler for the pad-added signal */
@@ -28,17 +29,30 @@ int main(int argc, char *argv[])
     data.convert = gst_element_factory_make ("audioconvert", "convert");
     data.sink = gst_element_factory_make ("autoaudiosink", "sink");
 
+    data.sink_video = gst_element_factory_make ("autovideosink", "sink_video");
+    data.converter_video = gst_element_factory_make ("videoconvert", "convert_video");
+
+
     /* Create the empty pipeline */
     data.pipeline = gst_pipeline_new ("test-pipeline");
 
-    if (!data.pipeline || !data.source || !data.convert || !data.sink) {
+    if (!data.pipeline || !data.source || !data.convert || !data.sink || !data.sink_video || !data.converter_video) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
 
     /* Build the pipeline. Note that we are NOT linking the source at this point. We will do it later. */
-    gst_bin_add_many (GST_BIN (data.pipeline), data.source, data.convert , data.sink, NULL);
+    gst_bin_add_many (GST_BIN (data.pipeline), data.source, data.convert , data.sink, data.converter_video,
+                      data.sink_video, NULL);
+
     if (!gst_element_link (data.convert, data.sink))
+    {
+        g_printerr ("Elements could not be linked.\n");
+        gst_object_unref (data.pipeline);
+        return -1;
+    }
+
+    if (!gst_element_link (data.converter_video, data.sink_video))
     {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (data.pipeline);
@@ -119,6 +133,11 @@ static void pad_added_handler (GstElement *src, GstPad *new_pad, CustomData *dat
     GstStructure *new_pad_struct = NULL;
     const gchar *new_pad_type = NULL;
 
+    GstPad *converter_video_pad = gst_element_get_static_pad (data->converter_video, "sink"); /// Doesn't work with name sink_convert
+    GstCaps *video_new_pad_caps = NULL;
+    GstStructure *video_new_pad_struct = NULL;
+    const gchar *video_new_pad_type = NULL;
+
     g_print ("Received new pad '%s' from '%s':\n", GST_PAD_NAME (new_pad), GST_ELEMENT_NAME (src));
 
     /* If our converter is already linked, we have nothing to do here */
@@ -132,7 +151,26 @@ static void pad_added_handler (GstElement *src, GstPad *new_pad, CustomData *dat
     new_pad_caps = gst_pad_get_current_caps (new_pad);
     new_pad_struct = gst_caps_get_structure (new_pad_caps, 0);
     new_pad_type = gst_structure_get_name (new_pad_struct);
-    if (!g_str_has_prefix (new_pad_type, "audio/x-raw"))
+
+    if (g_str_has_prefix (new_pad_type, "video/x-raw"))
+    {
+        video_new_pad_caps = gst_pad_get_current_caps (new_pad);
+        video_new_pad_struct = gst_caps_get_structure(video_new_pad_caps, 0);
+        video_new_pad_type = gst_structure_get_name(video_new_pad_struct);
+
+        g_print ("Video type '%s' found! \n", video_new_pad_type);
+        ret = gst_pad_link (new_pad, converter_video_pad);
+        if (GST_PAD_LINK_FAILED (ret))
+        {
+            g_print ("Type is '%s' but link failed.\n", video_new_pad_type);
+        }
+        else
+        {
+            g_print ("Link succeeded (type '%s').\n", video_new_pad_type);
+        }
+        goto exit;
+    }
+    else if (!g_str_has_prefix (new_pad_type, "audio/x-raw"))
     {
         g_print ("It has type '%s' which is not raw audio. Ignoring.\n", new_pad_type);
         goto exit;
