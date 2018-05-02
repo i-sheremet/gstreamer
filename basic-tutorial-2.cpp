@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
 //    source = gst_element_factory_make("autovideosrc", "source"); /// WEBCAM
     /* Create the elements */
-    source = gst_element_factory_make("videotestsrc", "source");
+    source = gst_element_factory_make("uvch264src", "source");
     sink = gst_element_factory_make("autovideosink", "sink");
     filter = gst_element_factory_make("videoconvert", "filter");
 
