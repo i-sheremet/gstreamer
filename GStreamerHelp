@@ -80,14 +80,13 @@ gst-launch-1.0 uvch264src initial-bitrate=3000000 average-bitrate=3000000 iframe
 gst-launch-1.0 uvch264src initial-bitrate=5000000 average-bitrate=5000000 iframe-period=3000 device=/dev/video1 name=src auto-start=true ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! mp4mux ! filesink location=navcam_test.mp4 -e
 
 #### RECORD AND STREAM ####
-gst-launch-1.0 v4l2src device=/dev/video0 ! tee name=t ! queue ! video/x-h264,framerate=30/1,width=1920,height=1080 ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4 -e t. ! queue ! decodebin ! videoscale ! videorate ! video/x-raw,framerate=5/1,width=640,height=360 ! jpegenc ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.7 port=5000 sync=false
+gst-launch-1.0 v4l2src device=/dev/video0 ! tee name=t ! queue ! video/x-h264,framerate=30/1,width=1920,height=1080 ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4 -e t. ! queue ! decodebin ! videoscale ! videorate ! video/x-raw,framerate=5/1,width=640,height=360 ! jpegenc ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000 sync=false
 
 ########################################################################################################
 ########################################################################################################
 
 #### TEST 1 ####
-gst-launch-1.0 v4l2src device=/dev/video0 ! tee name="stream" ! queue ! video/x-h264,framerate=30/1,width=1920,height=1080 ! h264parse ! mp4mux ! filesink location=~/Desktop/navcam_test.mp4 -e   stream. ! queue ! video/x-h264,framerate=5/1,width=640,height=360 ! h264parse ! rtph264pay ! udpsink host=192.168.1.7 port=5000 sync=false
-
+gst-launch-1.0 v4l2src device=/dev/video0 ! tee name="stream" ! queue ! video/x-h264,framerate=30/1,width=1920,height=1080 ! h264parse ! mp4mux ! filesink location=~/Desktop/navcam_test.mp4 -e   stream. ! queue ! video/x-h264,framerate=5/1,width=640,height=360 ! h264parse ! rtph264pay ! udpsink host=192.168.1.38 port=5000 sync=false
 
 
 
@@ -108,8 +107,8 @@ gst-launch-1.0 v4l2src device=/dev/video1 ! video/x-raw,framerate=5/1,width=640,
 
 
 
-
-
+#### TEST 2 ####
+gst-launch-1.0 v4l2src io-mode=2 device=/dev/video0 ! tee name=t ! queue ! video/x-h264,framerate=30/1,width=1920,height=1080 ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4 -e t. ! queue ! decodebin ! videoscale ! videorate ! video/x-raw,framerate=5/1,width=640,height=360 ! jpegenc ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000 sync=false
 
 
 

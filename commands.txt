@@ -28,9 +28,60 @@ gst-launch-1.0 -v -e uvch264src device=/dev/video0 name=src auto-start=true src.
 
 
 
-# Check if the flag rate-control=cbr worked
-gst-launch-1.0 -v -e uvch264src device=/dev/video0 name=src rate-control=cbr auto-start=true src.vidsrc ! tee name=t t.src_00 ! queue ! video/x-h264,width=1280,height=720,framerate=30/1 ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4  t.src_01 ! queue ! decodebin ! videoscale ! videorate ! video/x-raw,framerate=5/1,width=640,height=360 ! jpegenc ! jpegparse ! rtpjpegpay ! udpsink host=127.0.0.1 port=5000
+########################################################################################################
+Flags for uvch264src:
+rate-control=cbr - still gives artifacts
+rate-control=vbr - 40% CPU, artifacts, delays
+rate-control=qp  - 25% CPU, seems no artifacts, but doesn't record properly (when image changes rapidly, image is still)
 
+
+
+Flags for v4l2src:
+io-mode=4 - 100-130% CPU, but seems like no artifacts, around 1 sec delay
+io-mode=3 - Error
+io-mode=1 - 100% CPU, artifacts
+
+
+
+video/x-h264:
+profile=constrained-baseline - CPU increases with more change?
+
+
+
+#########################################################################################################
+
+
+
+
+### Give artifacts on intensive frame changes
+gst-launch-1.0 -e uvch264src device=/dev/video0 name=src rate-control=qp auto-start=true src.vidsrc ! tee name=t t.src_00 ! queue ! video/x-h264,width=1280,height=720,framerate=30/1,profile=constrained-baseline ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4  t.src_01 ! queue ! decodebin ! videoscale ! videorate ! video/x-raw,framerate=5/1,width=640,height=360 ! jpegenc ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000
+
+
+
+### Looks like final command
+# profile=constrained-baseline - when image changes significantly, without this flag record is not happening
+# rate-control=qp - removes artifacts
+# iframe-period=1000 - faster image updated on significant image change
+
+gst-launch-1.0 -e uvch264src device=/dev/video0 name=src iframe-period=1000 rate-control=qp auto-start=true src.vidsrc ! tee name=t t.src_00 ! queue ! video/x-h264,width=1280,height=720,framerate=30/1,profile=constrained-baseline ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4  t.src_01 ! queue ! decodebin ! videoscale ! videorate ! video/x-raw,framerate=5/1,width=640,height=360 ! jpegenc ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000
+
+
+
+
+
+
+
+gst-launch-1.0 -e uvch264src device=/dev/video0 name=src rate-control=qp auto-start=true src.vidsrc ! tee name=t t.src_00 ! queue ! video/x-h264,width=1280,height=720,framerate=30/1,profile=constrained-baseline ! h264parse ! mp4mux ! filesink location=$HOME/navcam_test.mp4  t.src_02 ! queue ! image/jpeg,framerate=5/1,width=640,height=360 ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000 sync=false
+
+
+gst-launch-1.0 -e uvch264src device=/dev/video0 name=src rate-control=qp auto-start=true src.vidsrc ! tee name=t t.src_00 ! queue ! image/jpeg,framerate=5/1,width=640,height=360 ! jpegparse ! rtpjpegpay ! filesink location=$HOME/navcam_test.mp4  t.src_01 ! queue ! image/jpeg,framerate=5/1,width=640,height=360 ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000 sync=false
+
+
+
+
+
+### Just send JPEG no CPU
+gst-launch-1.0 -e uvch264src device=/dev/video0 name=src rate-control=qp auto-start=true src.vidsrc ! image/jpeg,framerate=5/1,width=640,height=360 ! jpegparse ! rtpjpegpay ! udpsink host=192.168.1.38 port=5000 sync=false
 
 
 
